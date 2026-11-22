@@ -1,0 +1,9 @@
+agentic_project.venv/
+.venv/
+.env
+__pycache__/
+*.sqlite
+*.db
+chroma_store/
+.pytest_cache/
+.DS_Store
