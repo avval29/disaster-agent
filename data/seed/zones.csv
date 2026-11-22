@@ -1,0 +1,9 @@
+name,lat,lon,population,flood_prone,heat_vulnerable
+North Delhi,28.6900,77.2100,900000,1,1
+North West Delhi,28.7300,77.1000,3600000,0,1
+West Delhi,28.6500,77.0900,2500000,0,1
+South West Delhi,28.5800,77.0500,2300000,0,1
+South Delhi,28.5300,77.2200,2700000,0,0
+Central Delhi,28.6500,77.2200,600000,0,1
+East Delhi,28.6300,77.2900,1700000,1,1
+Shahdara,28.6700,77.2900,2200000,1,1

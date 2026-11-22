@@ -1,0 +1,14 @@
+type,name,zone,quantity
+rescue_boat,Rescue boats,Shahdara,6
+rescue_boat,Rescue boats,North Delhi,4
+rescue_boat,Rescue boats,East Delhi,5
+ambulance,Ambulances,Central Delhi,12
+ambulance,Ambulances,East Delhi,8
+ambulance,Ambulances,South Delhi,8
+water_tanker,Water tankers,South West Delhi,10
+water_tanker,Water tankers,West Delhi,10
+water_tanker,Water tankers,North West Delhi,8
+medical_team,Medical teams,Central Delhi,6
+relief_kit,Relief kits,Shahdara,2000
+relief_kit,Relief kits,Central Delhi,3000
+generator,Generators,North Delhi,10

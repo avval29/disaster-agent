@@ -1,0 +1,12 @@
+name,zone,lat,lon,capacity,occupancy,has_medical,flood_safe
+Community Hall Burari,North Delhi,28.7550,77.1980,400,0,1,1
+Govt School Civil Lines,North Delhi,28.6800,77.2250,300,0,0,1
+Indoor Stadium Central,Central Delhi,28.6400,77.2300,800,50,1,1
+Community Centre Karol Bagh,Central Delhi,28.6500,77.1900,250,0,0,1
+Govt School Mayur Vihar,East Delhi,28.6080,77.2970,350,0,0,0
+Community Hall Preet Vihar,East Delhi,28.6420,77.2950,300,20,1,1
+Relief Camp Shahdara,Shahdara,28.6700,77.2900,500,0,1,1
+Community Hall Saket,South Delhi,28.5250,77.2150,300,0,1,1
+Govt School Dwarka,South West Delhi,28.5900,77.0500,450,0,0,1
+Community Hall Rohini,North West Delhi,28.7400,77.1200,600,0,1,1
+Community Hall Janakpuri,West Delhi,28.6200,77.0800,350,0,0,1
