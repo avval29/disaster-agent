@@ -38,6 +38,7 @@ class DisasterState(TypedDict, total=False):
 
     # Knowledge (Protocol Retriever)
     protocols: list[dict[str, Any]]
+    past_cases: list[dict[str, Any]]      # similar past runs recalled from long-term memory
 
     # Planning loop (Planner / Critic)
     plan: dict[str, Any]
@@ -71,6 +72,7 @@ def new_state(
         observations={},
         data_sources={},
         protocols=[],
+        past_cases=[],
         replan_count=0,
         approval_status="pending",
         warnings=[],
