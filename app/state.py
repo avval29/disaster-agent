@@ -7,10 +7,12 @@ import operator
 import uuid
 from typing import Annotated, Any, Literal, TypedDict
 
-Severity = Literal["Low", "Moderate", "High", "Critical"]
+Severity = Literal["Low", "Moderate", "High", "Critical", "Unknown"]
 SEVERITY_ORDER = ["Low", "Moderate", "High", "Critical"]
-HazardType = Literal["flood", "heatwave", "earthquake"]
+HazardType = Literal["flood", "heatwave", "earthquake", "none"]
 ApprovalStatus = Literal["pending", "approved", "rejected", "not_required"]
+
+APPEND_KEYS = ("warnings", "errors", "execution_log")
 
 
 class DisasterState(TypedDict, total=False):
@@ -20,16 +22,19 @@ class DisasterState(TypedDict, total=False):
     region: str
     lat: float
     lon: float
+    scenario: str | None                  # None = live data; otherwise a scenario name
 
     # Perception (Monitor)
     observations: dict[str, Any]          # {"weather": {...}, "quake": {...}}
-    data_sources: dict[str, str]          # {"weather": "live" | "cache" | "none"}
+    data_sources: dict[str, str]          # {"weather": "live" | "cache" | "scenario" | "none"}
 
     # Risk (Risk Analyst)
     hazard_type: str
     severity: str
     risk_score: float
+    hazard_scores: dict[str, float | None]
     risk_rationale: str
+    key_concerns: list[str]
 
     # Knowledge (Protocol Retriever)
     protocols: list[dict[str, Any]]
@@ -52,7 +57,9 @@ class DisasterState(TypedDict, total=False):
     execution_log: Annotated[list[dict[str, Any]], operator.add]
 
 
-def new_state(request: str, lat: float, lon: float, region: str = "Delhi") -> DisasterState:
+def new_state(
+    request: str, lat: float, lon: float, region: str = "Delhi", scenario: str | None = None
+) -> DisasterState:
     """Create a fresh state for one run."""
     return DisasterState(
         run_id=uuid.uuid4().hex[:12],
@@ -60,6 +67,7 @@ def new_state(request: str, lat: float, lon: float, region: str = "Delhi") -> Di
         region=region,
         lat=lat,
         lon=lon,
+        scenario=scenario,
         observations={},
         data_sources={},
         protocols=[],
@@ -69,3 +77,17 @@ def new_state(request: str, lat: float, lon: float, region: str = "Delhi") -> Di
         errors=[],
         execution_log=[],
     )
+
+
+def apply_update(state: DisasterState, update: dict[str, Any]) -> DisasterState:
+    """Merge a node's partial update into the state, the way LangGraph will.
+
+    Append-only keys are extended; everything else is overwritten. Used in
+    tests, scripts and the UI when calling nodes directly.
+    """
+    for key, value in update.items():
+        if key in APPEND_KEYS:
+            state[key] = list(state.get(key, [])) + list(value)
+        else:
+            state[key] = value
+    return state
