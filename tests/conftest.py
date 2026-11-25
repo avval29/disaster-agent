@@ -7,6 +7,8 @@ import pytest
 from app import db
 from app.config import settings
 from app.rag import embeddings
+from app.tools import actions
+
 
 FLOOD_TEXT = ("Flood evacuation guidelines. Move residents of low lying areas to higher shelters "
               "before the river crosses the danger level. ") * 3
@@ -39,6 +41,8 @@ def isolated_env(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "llm_provider", "none")
     monkeypatch.setattr(embeddings, "embed", fake_embed)
     monkeypatch.delenv("SIMULATE_API_FAILURE", raising=False)
+    monkeypatch.delenv("SIMULATE_TOOL_FAILURE", raising=False)
+    actions.reset_simulation()
     db.init_db()
     db.seed_db()
     yield

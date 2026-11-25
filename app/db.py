@@ -84,6 +84,20 @@ CREATE TABLE IF NOT EXISTS api_cache (
     fetched_at REAL NOT NULL,
     payload TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS action_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idempotency_key TEXT NOT NULL UNIQUE,
+    run_id TEXT NOT NULL,
+    tool TEXT NOT NULL,
+    params_json TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_alert_once
+    ON alert_outbox (run_id, zone, language, channel);
+    
 """
 
 

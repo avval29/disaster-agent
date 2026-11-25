@@ -48,9 +48,14 @@ class DisasterState(TypedDict, total=False):
     # Human-in-the-loop
     approval_status: str
     human_feedback: str
+    human_rejections: int
+    approved_plan_hash: str               # hash of the exact plan the human approved
 
     # Outcome (Executor)
     final_report: str
+    execution: dict[str, Any]             # Executor result summary
+    status: str                           # final outcome
+    escalation_reason: str
 
     # Append-only trails
     warnings: Annotated[list[str], operator.add]
@@ -74,6 +79,8 @@ def new_state(
         protocols=[],
         past_cases=[],
         replan_count=0,
+        human_rejections=0,
+        approved_plan_hash="",
         approval_status="pending",
         warnings=[],
         errors=[],
