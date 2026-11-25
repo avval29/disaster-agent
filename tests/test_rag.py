@@ -84,3 +84,9 @@ def test_unsupported_file_skipped():
     report = ingest.ingest_all()
     assert report["files"] == 0
     assert any("unsupported" in s for s in report["skipped"])
+
+def test_useful_chunk_filter():
+    assert not ingest.is_useful_chunk("1 Guidelines for Cooling Centers")
+    assert not ingest.is_useful_chunk("i National Disaster Management Guidelines Index Previous Next")
+    assert ingest.is_useful_chunk("Cooling centres should be open during peak afternoon hours and "
+                                  "provide drinking water, shade and first aid for vulnerable groups. " * 2)

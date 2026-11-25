@@ -21,6 +21,14 @@ from app.rag.store import get_collection
 
 SUPPORTED = {".pdf", ".txt", ".md"}
 BATCH = 64
+MIN_PDF_CHUNK_CHARS = 150
+
+
+def is_useful_chunk(chunk: str) -> bool:
+    """Drops page headers, 'Index Previous Next' strips and number-only fragments."""
+    if len(chunk) < MIN_PDF_CHUNK_CHARS:
+        return False
+    return sum(c.isalpha() for c in chunk) / len(chunk) > 0.4
 
 
 def infer_hazard(filename: str) -> str:
@@ -98,11 +106,19 @@ def ingest_all(docs_dir: Path | None = None) -> dict[str, Any]:
         ids: list[str] = []
         docs: list[str] = []
         metas: list[dict[str, Any]] = []
+        is_pdf = path.suffix.lower() == ".pdf"
         for page_no, text in pages:
             for i, chunk in enumerate(chunk_text(text)):
+                if is_pdf and not is_useful_chunk(chunk):
+                    continue
                 ids.append(_chunk_id(path.name, page_no, i))
                 docs.append(chunk)
                 metas.append({"source": path.name, "page": page_no or 0, "hazard": hazard})
+        if is_pdf and len(pages) >= 5 and len(docs) < len(pages) * 0.5:
+            report["skipped"].append(
+                f"{path.name}: mostly scanned images ({len(docs)} text chunks for {len(pages)} pages)"
+            )
+            continue
         if not docs:
             report["skipped"].append(f"{path.name}: no extractable text (scanned PDF?)")
             continue
