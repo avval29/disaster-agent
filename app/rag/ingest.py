@@ -10,6 +10,10 @@ import hashlib
 import re
 from pathlib import Path
 from typing import Any
+import logging
+import sys
+
+logging.getLogger("pypdf").setLevel(logging.CRITICAL)
 
 from app.config import settings
 from app.rag import embeddings
@@ -117,7 +121,22 @@ def ingest_all(docs_dir: Path | None = None) -> dict[str, Any]:
     return report
 
 
+def reset_index() -> None:
+    """Delete the whole collection so stale chunks from old runs disappear."""
+    import chromadb
+    from app.rag.store import COLLECTION
+
+    client = chromadb.PersistentClient(path=str(settings.chroma_dir))
+    try:
+        client.delete_collection(COLLECTION)
+        print("Existing index deleted.")
+    except Exception:
+        pass
+
+
 def main() -> None:
+    if "--reset" in sys.argv:
+        reset_index()
     print(f"Ingesting from {settings.docs_dir}")
     report = ingest_all()
     print(f"\nFiles: {report['files']} | chunks: {report['chunks']}")
