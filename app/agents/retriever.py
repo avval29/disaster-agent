@@ -1,12 +1,13 @@
 """Protocol Retriever agent (deliberative): RAG over guideline documents plus
 recall of similar past runs from long-term memory.
 
-Retrieved text is untrusted: suspicious chunks are dropped before any other
-agent sees them. If nothing is indexed, the agent says so and does not invent
-protocol content.
+Retrieved text is untrusted: suspicious chunks are dropped before any other agent
+sees them. Contents pages and spaced-out headings are dropped as low value. If nothing
+is indexed, the agent says so and does not invent protocol content.
 """
 from __future__ import annotations
 
+import re
 import sqlite3
 from typing import Any
 
@@ -18,24 +19,39 @@ AGENT = "protocol_retriever"
 MAX_PROTOCOLS = 6
 PER_QUERY_K = 3
 MAX_CHARS = 1200
+MAX_DISTANCE = 1.0   # smaller = closer match; typical good hits are 0.5 to 0.9
+MIN_KEEP = 3         # always keep at least this many of the best hits
 
 QUERIES = {
     "flood": [
-        "flood evacuation and shelter management guidelines",
-        "flood early warning and public communication",
-        "flood rescue relief and medical response operations",
+        "evacuation plan procedure and responsibilities of district administration",
+        "flood shelter and relief camp arrangements and basic services",
+        "flood warning dissemination to the public and communities at risk",
+        "deployment of rescue boats and medical teams during floods",
     ],
     "heatwave": [
-        "heat wave action plan cooling centres and public advisories",
-        "heat stroke prevention medical preparedness hospitals",
-        "drinking water supply and vulnerable groups during heat wave",
+        "cooling centres operation location and services for vulnerable groups",
+        "heat stroke prevention medical preparedness and hospital readiness",
+        "drinking water distribution and public advisories during heat wave",
     ],
     "earthquake": [
-        "earthquake search and rescue operations and response",
-        "earthquake emergency shelter relief and medical response",
-        "earthquake public communication and damage assessment",
+        "search and rescue operations after earthquake in collapsed buildings",
+        "emergency shelter relief camps and medical response after earthquake",
+        "public information and damage assessment after earthquake",
     ],
 }
+
+_NUMERIC = re.compile(r"^\d[\d.]*$")
+
+
+def is_low_value(text: str) -> bool:
+    """Contents pages (many numbers) and spaced-out headings (many one-letter tokens)."""
+    tokens = text.split()
+    if len(tokens) < 15:
+        return True
+    numeric = sum(1 for t in tokens if _NUMERIC.match(t.strip(",;:()")))
+    singles = sum(1 for t in tokens if len(t) == 1 and t.isalpha())
+    return numeric / len(tokens) > 0.10 or singles / len(tokens) > 0.08
 
 
 def retriever_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -60,6 +76,7 @@ def retriever_node(state: dict[str, Any]) -> dict[str, Any]:
 
     protocols: list[dict[str, Any]] = []
     suspicious_ids: set[str] = set()
+    low_value = 0
     try:
         if not rag_search.is_indexed():
             warnings.append(
@@ -73,14 +90,20 @@ def retriever_node(state: dict[str, Any]) -> dict[str, Any]:
                     if hit["suspicious"]:
                         suspicious_ids.add(hit["id"])
                         continue
+                    if is_low_value(hit["text"]):
+                        low_value += 1
+                        continue
                     best = merged.get(hit["id"])
                     if best is None or hit["distance"] < best["distance"]:
                         merged[hit["id"]] = hit
-            ranked = sorted(merged.values(), key=lambda h: h["distance"])[:MAX_PROTOCOLS]
+            ranked = sorted(merged.values(), key=lambda h: h["distance"])
+            close = [h for h in ranked if h["distance"] <= MAX_DISTANCE]
+            if len(close) < MIN_KEEP:
+                close = ranked[:MIN_KEEP]
             protocols = [
                 {"id": h["id"], "text": h["text"][:MAX_CHARS], "source": h["source"],
                  "page": h["page"], "hazard": h["hazard"], "distance": h["distance"]}
-                for h in ranked
+                for h in close[:MAX_PROTOCOLS]
             ]
             if suspicious_ids:
                 warnings.append(
@@ -96,7 +119,7 @@ def retriever_node(state: dict[str, Any]) -> dict[str, Any]:
 
     audit(run_id, AGENT, "retrieved", {
         "hazard": hazard, "protocols": len(protocols), "past_cases": len(past),
-        "suspicious_dropped": len(suspicious_ids),
+        "suspicious_dropped": len(suspicious_ids), "low_value_dropped": low_value,
     })
     return {
         "protocols": protocols,

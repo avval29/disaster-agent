@@ -68,3 +68,13 @@ def test_includes_past_cases():
     upd = retriever_node(flood_state())
     assert len(upd["past_cases"]) == 1
     assert upd["past_cases"][0]["run_id"] == past["run_id"]
+
+def test_low_value_chunks_detected():
+    contents = " ".join(f"{i}.{j} Section heading {i * 10 + j}" for i in range(1, 6) for j in range(1, 5))
+    spaced = "n a t i o n a l d i s a s t e r m a n a g e m e n t g u i d e l i n e s " * 3
+    prose = ("Evacuation of people from low lying areas should be organised by the district "
+             "administration with clear responsibilities and adequate transport and shelter "
+             "arrangements. ") * 3
+    assert retriever_mod.is_low_value(contents)
+    assert retriever_mod.is_low_value(spaced)
+    assert not retriever_mod.is_low_value(prose)

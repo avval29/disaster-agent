@@ -47,6 +47,13 @@ class Settings:
 
     # Agent behaviour
     max_replans: int = 3
+    # Planning assumptions (illustrative, NOT official data; state this in the report)
+    at_risk_fraction: dict = field(default_factory=lambda: {
+        "flood": {"High": 0.0003, "Critical": 0.001},
+        "heatwave": {"High": 0.0001, "Critical": 0.0002},
+        "earthquake": {"High": 0.0002, "Critical": 0.0004},
+    })
+    resource_share: dict = field(default_factory=lambda: {"High": 0.5, "Critical": 1.0})
 
 
 settings = Settings()
